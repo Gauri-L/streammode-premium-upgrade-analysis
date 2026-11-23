@@ -12,7 +12,7 @@ Generation Australia Data Analytics Program | Team capstone | Australia, FY2025â
 
 ## Data Source
 
-Generation Australia provided the datasets for our final team capstone. This repository shares aggregate findings, a dashboard screenshot and SQL validation queries. The source datasets are kept separate.
+Generation Australia provided the datasets for our final team capstone. My teammate Aiushee cleaned the Users dataset, which I used to build the subscriber cohorts for Dashboard 4. The repository contains aggregate findings, a dashboard screenshot, SQL validation queries and DAX calculated columns. The source datasets are kept separate.
 
 ## Business Question
 
@@ -27,6 +27,14 @@ Which Basic subscribers should StreamMODE prioritise for a Premium upgrade offer
 - Identified 213 sessions where playback did not start and retained them in the dataset.
 
 [View the SQL validation queries](./sql/streaming_sessions_validation.sql)
+
+### DAX calculated columns
+
+- **Subscription changes:** Grouped changes by month and classified Basic-to-Premium moves as upgrades and Premium-to-Basic moves as downgrades.
+- **Subscriber cohorts:** Used the cleaned Users data and related subscription changes to identify Basic subscribers at each reference date. Grouped the May and June cohorts by tenure.
+- **Exploratory viewing analysis:** Counted days with positive playback in April for a subset of Basic subscribers with under 90 days of tenure on 1 May who had joined by 1 April. Classified their upgrade outcome for 1â€“30 May. This subset has a separate eligibility rule from the broader tenure comparison.
+
+[View the DAX calculated columns](./dax/dashboard4_calculated_columns.dax)
 
 ## Key Findings
 
