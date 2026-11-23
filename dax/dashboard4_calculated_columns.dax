@@ -1,0 +1,200 @@
+// StreamMODE Dashboard 4 | Calculated columns from Power BI Desktop
+// Dashboard 4 calculated columns: Gauri Lohar
+// StreamMODE data preparation: Gauri, Aiushee, Ekta, Bryce and Nili.
+// Each definition is a separate calculated column for the table named above it.
+
+// Table: Subscription_Changes_Cleaned
+Change Month =
+DATE(
+    YEAR('Subscription_Changes_Cleaned'[ChangeDate]),
+    MONTH('Subscription_Changes_Cleaned'[ChangeDate]),
+    1
+)
+
+Change Month Label =
+IF(
+    NOT ISBLANK([Change Month]),
+    FORMAT([Change Month], "MMM yyyy", "en-AU")
+)
+
+ChangeDirection =
+SWITCH(
+    TRUE(),
+    'Subscription_Changes_Cleaned'[PreviousPlan] = "Basic"
+        && 'Subscription_Changes_Cleaned'[NewPlan] = "Premium", "Upgrade",
+    'Subscription_Changes_Cleaned'[PreviousPlan] = "Premium"
+        && 'Subscription_Changes_Cleaned'[NewPlan] = "Basic", "Downgrade",
+    "Other"
+)
+
+// Table: Users csv
+// RELATEDTABLE relies on the model relationships to the changes and sessions tables.
+Basic at FY2025-26 Opening =
+VAR OpeningDate = DATE(2025, 7, 1)
+VAR ClosingDate = DATE(2026, 7, 1)
+VAR FirstChange =
+    TOPN(
+        1,
+        FILTER(
+            RELATEDTABLE(Subscription_Changes_Cleaned),
+            Subscription_Changes_Cleaned[ChangeDate] >= OpeningDate
+                && Subscription_Changes_Cleaned[ChangeDate] < ClosingDate
+        ),
+        Subscription_Changes_Cleaned[ChangeDate], ASC,
+        Subscription_Changes_Cleaned[ChangeID], ASC
+    )
+VAR OpeningPlan =
+    COALESCE(
+        MAXX(FirstChange, Subscription_Changes_Cleaned[PreviousPlan]),
+        'Users csv'[SubscriptionPlan]
+    )
+RETURN
+    NOT ISBLANK('Users csv'[SubscriptionStartDate])
+        && 'Users csv'[SubscriptionStartDate] < OpeningDate
+        && OpeningPlan = "Basic"
+
+Basic at 1 May 2026 =
+VAR Cutoff = DATE(2026, 5, 1)
+VAR FirstChangeOnOrAfterCutoff =
+    TOPN(
+        1,
+        FILTER(
+            RELATEDTABLE('Subscription_Changes_Cleaned'),
+            'Subscription_Changes_Cleaned'[ChangeDate] >= Cutoff
+                && 'Subscription_Changes_Cleaned'[ChangeDate] < DATE(2026, 7, 1)
+        ),
+        'Subscription_Changes_Cleaned'[ChangeDate], ASC,
+        'Subscription_Changes_Cleaned'[ChangeID], ASC
+    )
+VAR PlanAtCutoff =
+    IF(
+        ISEMPTY(FirstChangeOnOrAfterCutoff),
+        'Users csv'[SubscriptionPlan],
+        MAXX(
+            FirstChangeOnOrAfterCutoff,
+            'Subscription_Changes_Cleaned'[PreviousPlan]
+        )
+    )
+RETURN
+    NOT ISBLANK('Users csv'[SubscriptionStartDate])
+        && 'Users csv'[SubscriptionStartDate] < Cutoff
+        && (
+            ISBLANK('Users csv'[SubscriptionEndDate])
+                || 'Users csv'[SubscriptionEndDate] >= Cutoff
+        )
+        && PlanAtCutoff = "Basic"
+
+Basic at 1 June 2026 =
+VAR Cutoff = DATE(2026, 6, 1)
+VAR FirstChange =
+    TOPN(
+        1,
+        FILTER(
+            RELATEDTABLE('Subscription_Changes_Cleaned'),
+            'Subscription_Changes_Cleaned'[ChangeDate] >= Cutoff
+                && 'Subscription_Changes_Cleaned'[ChangeDate] < DATE(2026, 7, 1)
+        ),
+        'Subscription_Changes_Cleaned'[ChangeDate], ASC,
+        'Subscription_Changes_Cleaned'[ChangeID], ASC
+    )
+VAR OpeningPlan =
+    IF(
+        ISEMPTY(FirstChange),
+        'Users csv'[SubscriptionPlan],
+        MAXX(FirstChange, 'Subscription_Changes_Cleaned'[PreviousPlan])
+    )
+RETURN
+    NOT ISBLANK('Users csv'[SubscriptionStartDate])
+        && 'Users csv'[SubscriptionStartDate] < Cutoff
+        && (
+            ISBLANK('Users csv'[SubscriptionEndDate])
+                || 'Users csv'[SubscriptionEndDate] >= Cutoff
+        )
+        && OpeningPlan = "Basic"
+
+Tenure Days at 1 May 2026 =
+IF(
+    'Users csv'[Basic at 1 May 2026],
+    DATEDIFF(
+        'Users csv'[SubscriptionStartDate],
+        DATE(2026, 5, 1),
+        DAY
+    )
+)
+
+May Tenure Group =
+VAR DaysOnService = 'Users csv'[Tenure Days at 1 May 2026]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(DaysOnService), BLANK(),
+        DaysOnService < 90, "Under 90 days",
+        DaysOnService < 180, "90–179 days",
+        "180+ days"
+    )
+
+June Tenure Group =
+VAR TenureDays =
+    DATEDIFF('Users csv'[SubscriptionStartDate], DATE(2026, 6, 1), DAY)
+RETURN
+    IF(
+        'Users csv'[Basic at 1 June 2026],
+        SWITCH(
+            TRUE(),
+            TenureDays < 90, "Under 90 days",
+            TenureDays < 180, "90–179 days",
+            "180+ days"
+        )
+    )
+
+Tenure Days at 30 June 2026 =
+IF(
+    NOT ISBLANK('Users csv'[SubscriptionStartDate])
+        && 'Users csv'[SubscriptionStartDate] <= DATE(2026, 6, 30),
+    DATEDIFF(
+        'Users csv'[SubscriptionStartDate],
+        DATE(2026, 6, 30),
+        DAY
+    )
+)
+
+// Exploratory cohort for comparing April viewing with May upgrades.
+May Upgrade Outcome =
+VAR EligibleCustomer =
+    'Users csv'[Basic at 1 May 2026] = TRUE()
+        && 'Users csv'[May Tenure Group] = "Under 90 days"
+        && 'Users csv'[SubscriptionStartDate] <= DATE(2026, 4, 1)
+VAR MayUpgrades =
+    FILTER(
+        RELATEDTABLE('Subscription_Changes_Cleaned'),
+        'Subscription_Changes_Cleaned'[PreviousPlan] = "Basic"
+            && 'Subscription_Changes_Cleaned'[NewPlan] = "Premium"
+            && 'Subscription_Changes_Cleaned'[ChangeDate] >= DATE(2026, 5, 1)
+            && 'Subscription_Changes_Cleaned'[ChangeDate] < DATE(2026, 5, 31)
+    )
+RETURN
+    IF(
+        EligibleCustomer,
+        IF(ISEMPTY(MayUpgrades), "Did not upgrade", "Upgraded")
+    )
+
+April Viewing Days =
+VAR AprilSessions =
+    FILTER(
+        RELATEDTABLE('Streaming_Sessions'),
+        'Streaming_Sessions'[SessionStartUTC] >= DATE(2026, 4, 1)
+            && 'Streaming_Sessions'[SessionStartUTC] < DATE(2026, 5, 1)
+            && 'Streaming_Sessions'[PlaybackMinutes] > 0
+    )
+VAR ViewingDates =
+    DISTINCT(
+        SELECTCOLUMNS(
+            AprilSessions,
+            "Viewing Date", INT('Streaming_Sessions'[SessionStartUTC])
+        )
+    )
+RETURN
+    IF(
+        NOT ISBLANK('Users csv'[May Upgrade Outcome]),
+        COALESCE(COUNTROWS(ViewingDates), 0)
+    )
