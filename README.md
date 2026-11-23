@@ -19,6 +19,9 @@ For this team capstone, I developed a dashboard tracking subscription movements 
 - Built Power BI visuals showing monthly upgrades and downgrades, upgrade rates by tenure, and upgrade activity by state.
 - Separately validated 14,000 streaming session records in SQL Server for duplicate session IDs, missing values, negative values and playback consistency.
 - Identified 213 sessions where playback did not start and retained them in the dataset.
+[View the SQL validation queries](./sql/streaming_sessions_validation.sql)
+
+## Key Findings
 
 ## Key Findings
 
