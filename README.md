@@ -2,26 +2,31 @@
 
 **Power BI · DAX · SQL Server**
 
-Generation Australia Data Analytics Capstone | Australia, FY2025–26
+Generation Australia Data Analytics Program | Team capstone | Australia, FY2025–26
 
-**My contribution:** Gauri Lohar – Dashboard 4: Premium Upgrade Opportunities
+**My contribution:** Gauri Lohar · Dashboard 4: Premium Upgrade Opportunities and SQL data validation
+
+## Dashboard Preview
+
+![StreamMODE Power BI dashboard showing Premium upgrade opportunities](./dashboard-4-premium-upgrade.jpg)
+
+## Data Source
+
+Generation Australia provided the datasets for our final team capstone. This repository shares aggregate findings, a dashboard screenshot and SQL validation queries. The source datasets are kept separate.
 
 ## Business Question
 
 Which Basic subscribers should StreamMODE prioritise for a Premium upgrade offer?
 
-For this team capstone, I developed a dashboard tracking subscription movements and comparing observed 30-day upgrade rates by customer tenure. I used the results to recommend an audience for a pilot offer.
-
 ## What I Did
 
-- Used DAX to track distinct customers who upgraded or downgraded during the financial year.
+- Used DAX to count distinct customers who upgraded or downgraded during FY2025–26.
 - Compared 30-day upgrade rates across three Basic subscriber groups: under 90 days, 90–179 days, and 180 days or more. The comparison windows started on 1 May and 1 June 2026.
 - Built Power BI visuals showing monthly upgrades and downgrades, upgrade rates by tenure, and upgrade activity by state.
 - Separately validated 14,000 streaming session records in SQL Server for duplicate session IDs, missing values, negative values and playback consistency.
 - Identified 213 sessions where playback did not start and retained them in the dataset.
-[View the SQL validation queries](./sql/streaming_sessions_validation.sql)
 
-## Key Findings
+[View the SQL validation queries](./sql/streaming_sessions_validation.sql)
 
 ## Key Findings
 
@@ -36,12 +41,12 @@ Basic subscribers with under 90 days of tenure had the highest observed 30-day u
 
 ## Recommendation
 
-Run a randomised pilot for active Basic subscribers with under 90 days of tenure. Compare the 30-day upgrade rate of customers who receive the offer with that of a control group. Use the difference and campaign cost to decide whether to expand the offer.
+Run a randomised pilot for active Basic subscribers with under 90 days of tenure. Compare the 30-day upgrade rate of subscribers who receive the offer with that of a control group. Use the difference in upgrade rates and the campaign cost to decide whether to expand the offer.
 
 ## Scope and Limitations
 
-The tenure comparison covers two historical windows. It describes observed patterns and does not estimate the effect of an offer.
+Annual upgrade and downgrade counts cover FY2025–26. The tenure comparison uses two historical 30-day windows, beginning on 1 May and 1 June 2026. The proposed pilot would test whether the offer increases upgrades.
 
-The pilot was proposed, and the dashboard used cohort analysis. A predictive model was outside the completed work.
+## Acknowledgements
 
-This portfolio summary describes my contribution to the team capstone using aggregate results. It does not contain the underlying datasets.
+Thank you to Dr Bhanu and the entire Generation Australia team for their guidance, encouragement and support throughout the Data Analytics Program. I am grateful to Generation Australia for providing the datasets and to my capstone teammates for their collaboration on the final project.
